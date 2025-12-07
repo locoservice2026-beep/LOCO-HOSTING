@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Dashboard — LOCO Hosting</title>
+    <style>body{font-family:Inter,Arial;background:#071028;color:#e6eef8;padding:20px} .card{background:#07182a;padding:18px;border-radius:10px;max-width:900px;margin:auto} button{background:#0ea5a3;border:0;padding:8px 12px;border-radius:6px;color:#012;cursor:pointer}</style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Dashboard</h1>
+      <div>
+        <input id="botname" placeholder="Bot-Name" />
+        <button id="create">Bot erstellen</button>
+      </div>
+      <h3>Deine Bots</h3>
+      <ul id="bots"></ul>
+      <p style="margin-top:20px">Admin? <a href="/admin.html">Admin Panel</a></p>
+      <button id="logout">Logout</button>
+    </div>
+    <script>
+      async function load() {
+        const res = await fetch('/api/admin/users');
+        if (res.status === 403) {/* ignore */}
+        // load bots
+        const bres = await fetch('/api/mybots');
+        if (bres.ok) {
+          const dj = await bres.json();
+          const ul = document.getElementById('bots');
+          ul.innerHTML = '';
+          (dj.bots||[]).forEach(b=>{
+            const li = document.createElement('li');
+            li.textContent = b.name + ' (' + b.status + ') ';
+            const s = document.createElement('button'); s.textContent = 'Start'; s.onclick = async ()=>{await fetch('/api/bots/'+b.id+'/start',{method:'POST'});load();};
+            const t = document.createElement('button'); t.textContent = 'Stop'; t.onclick = async ()=>{await fetch('/api/bots/'+b.id+'/stop',{method:'POST'});load();};
+            li.appendChild(s); li.appendChild(t);
+            ul.appendChild(li);
+          });
+        }
+      }
+      document.getElementById('create').onclick = async ()=>{
+        const name = document.getElementById('botname').value;
+        const r = await fetch('/api/bots',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name})});
+        const j = await r.json();
+        if (j.ok) load(); else alert(JSON.stringify(j));
+      }
+      document.getElementById('logout').onclick = async ()=>{ await fetch('/api/logout',{method:'POST'}); location.href='/login.html'; }
+      load();
+    </script>
+  </body>
+</html>

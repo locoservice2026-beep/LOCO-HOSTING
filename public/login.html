@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Login — LOCO Hosting</title>
+    <style>body{font-family:Inter,Arial;background:#071028;color:#e6eef8;display:flex;align-items:center;justify-content:center;height:100vh} .card{background:#07182a;padding:24px;border-radius:12px;width:360px} input{width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #233446;background:#071028;color:#e6eef8} button{padding:10px;background:#0ea5a3;border:0;width:100%;border-radius:6px;cursor:pointer}</style>
+  </head>
+  <body>
+    <div class="card">
+      <h2>Login</h2>
+      <input id="email" placeholder="E‑Mail" />
+      <input id="password" type="password" placeholder="Passwort" />
+      <button id="login">Einloggen</button>
+      <p style="font-size:13px;margin-top:10px">Noch kein Konto? <a href="/register.html">Registrieren</a></p>
+      <div id="msg" style="margin-top:8px"></div>
+    </div>
+    <script>
+      document.getElementById('login').onclick = async () => {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const res = await fetch('/api/login', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({email,password})});
+        const d = await res.json();
+        document.getElementById('msg').textContent = JSON.stringify(d);
+        if (d.ok) location.href = '/dashboard.html';
+      }
+    </script>
+  </body>
+</html>
