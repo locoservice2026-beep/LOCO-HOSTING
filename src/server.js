@@ -1,5 +1,7 @@
 require('dotenv').config();
 const express = require('express');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcrypt');
@@ -11,6 +13,13 @@ const { openDb } = require('./db');
 const { startBot, stopBot, isRunning } = require('./botRunner');
 
 const app = express();
+// Security headers
+app.use(helmet());
+
+// Basic rate limiting
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
+app.use(limiter);
+
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -49,6 +58,12 @@ function requireAuth(req, res, next) {
   } catch (e) {
     return res.status(401).json({ error: 'unauth' });
   }
+}
+
+// set secure cookie options for production
+function setAuthCookie(res, token) {
+  const secure = process.env.NODE_ENV === 'production';
+  res.cookie('lh_token', token, { httpOnly: true, sameSite: 'lax', secure });
 }
 
 app.post('/api/register', async (req, res) => {
@@ -105,7 +120,7 @@ app.post('/api/login', async (req, res) => {
   if (!ok) return res.status(400).json({ error: 'invalid' });
 
   const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-  res.cookie('lh_token', token, { httpOnly: true, sameSite: 'lax' });
+  setAuthCookie(res, token);
   res.json({ ok: true });
 });
 
